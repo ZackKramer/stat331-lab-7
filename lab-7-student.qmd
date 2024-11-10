@@ -1,9 +1,18 @@
 ---
 title: "Lab 7: Functions + Fish"
-author: "Your name here!"
+author: "Zack Kramer"
 format: html
 editor: source
 embed-resources: true
+code-tools: true
+toc: true
+editor: source
+code-fold: true
+execute: 
+  error: true
+  echo: true
+  message: false
+  warning: false
 ---
 
 The goal of this lab is learn more about exploring missing data and writing
@@ -12,6 +21,7 @@ modular code.
 ```{r}
 #| label: setup
 
+library(tidyverse)
 
 ```
 
