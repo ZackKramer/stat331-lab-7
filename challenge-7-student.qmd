@@ -1,17 +1,34 @@
 ---
 title: "Challenge 7: Incorporating Multiple Inputs"
 subtitle: "Functions + Fish"
-author: "Your name here!"
+author: "Zack Kramer"
 format: html
 editor: source
 embed-resources: true
+code-tools: true
+toc: true
+code-fold: true
+execute: 
+  error: true
+  echo: true
+  message: false
+  warning: false
 ---
 
 ```{r}
 #| label: setup
 
+library(tidyverse)
 
 ```
+
+```{r}
+#| label: import-data
+
+fish <- read_csv(here::here('data','BlackfootFish.csv'))
+
+```
+
 
 ## Condition Index
 
@@ -26,7 +43,12 @@ $$\text{condition index} = \frac{weight}{length^3} \times 100$$
 ```{r}
 #| label: transform-data-to-have-correct-units
 
+fish <- fish |>
+  mutate(length = length/10)
+
+
 ```
+
 
 **2. Collecting data of this sort can be very messy! Write a function that will replace unlikely `length` and `weight` measurements with `NA`. Your function should accept at least three inputs:**
 
@@ -43,14 +65,35 @@ If you are struggling with the structure of your function, I would suggest readi
 ```{r}
 #| label: function-to-change-impossible-measurements-to-NA
 
+replace_unlikely_vals <- function(x, x_min, x_max){
+  
+  if (!is.numeric(x) | length(x) <= 1) {
+    stop("Error: Input vector must be numeric with a length not greater than 1.")
+  }
+  
+  case_when(
+    x < x_min ~ NA,
+    x > x_max ~ NA,
+    .default = x
+  )
+  
+}
+
+
 ```
+
 
 **3. After consulting the [Montana Record Table](https://fwp.mt.gov/fish/anglingData/records) for the four species of trout included in these data, I have conjectured that it is unlikely to have measurements for fish below 5 cm and above 80 cm in length or below 10 g and above 4,000 g in weight. Use your function to modify the `length` and `weight` columns of the `fish` dataset based on my cutoffs.**
 
 ```{r}
 #| label: modify-impossible-values-of-length-weight
 
+fish <- fish |>
+  mutate(length = replace_unlikely_vals(length, 5, 80),
+         weight = replace_unlikely_vals(weight, 10, 4000))
+
 ```
+
 
 **3. Write a function to calculate the condition index of a fish, given inputs of weight and length.**
 
@@ -62,6 +105,15 @@ dataset and variable names as inputs)!
 
 ```{r}
 #| label: condition-function
+
+calculate_condition_index <- function(df, len, wt){
+  
+  df <- df |>
+    mutate(condition_index = ( {{wt}} / ( {{len}} * {{len}} * {{len}} ) * 100))
+  
+  return(df)
+    
+}
 
 ```
 
@@ -76,4 +128,17 @@ dataset and variable names as inputs)!
 ```{r}
 #| label: condition-indices-over-time
 
+calculate_condition_index(fish, length, weight) |>
+  group_by(year, species) |>
+  summarize(median_condition = median(condition_index, na.rm = TRUE)) |>
+  ggplot(mapping = aes(x = year, 
+                       y = median_condition)) + 
+  geom_col() + 
+  labs(x = "Year",
+       y = "",
+       title = "Median Fish Condition Index from 1989 to 2006") + 
+  facet_wrap(~ species) + 
+  theme_light() + 
+  scale_x_continuous(breaks = seq(1990, 2006, by = 2))
+  
 ```
